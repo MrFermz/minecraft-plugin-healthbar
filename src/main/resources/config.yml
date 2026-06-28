@@ -1,0 +1,29 @@
+# minecraft-plugin-healthbar configuration
+# Lives at plugins/antitle/healthbar.yml on the server (shared ecosystem dir).
+
+display:
+  # How long (seconds) the bar stays above an entity after its last hit,
+  # before the original name is restored.
+  duration-seconds: 6
+  # The bar length is computed per entity from its real max health:
+  #   blocks = round(maxHealth / hp-per-block), clamped to [1, max-blocks].
+  # So a tougher mob gets a longer bar, up to the cap.
+  hp-per-block: 2.0
+  # Hard cap on the bar length (the floor is always 1 block).
+  max-blocks: 10
+  # Character used for the filled (remaining health) part of the bar.
+  # Defaults to the full block U+2588 so the bar reads as one solid strip.
+  filled-char: "█"
+  # Character used for the empty (lost health) part of the bar.
+  empty-char: "█"
+  # Also show the bar above players, not just mobs.
+  show-on-players: false
+
+colors:
+  # Health ratio (0.0–1.0) thresholds that pick the bar colour:
+  #   ratio >= green-above            -> green  (full-ish)
+  #   red-below <= ratio < green-above -> orange (about half)
+  #   ratio < red-below               -> red    (almost empty)
+  # The plugin computes which colour applies from the remaining health itself.
+  green-above: 0.5
+  red-below: 0.25
