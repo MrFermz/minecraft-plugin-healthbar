@@ -1,7 +1,7 @@
-name: HealthBarPlugin
+name: Healthbar
 version: '${version}'
 main: com.mrfermz.mcplugins.healthbar.HealthBarPlugin
 api-version: '1.21'
 author: Mr.Fermz
 description: Floating health bar shown above an entity after a player damages it.
-depend: [MinecraftPluginCore]
+depend: [Core]

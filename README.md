@@ -2,7 +2,7 @@
 
 Plugin แสดง **หลอดเลือด (health bar)** ลอยอยู่เหนือหัว entity แต่ละตัว บน Paper 26.2
 
-ส่วนหนึ่งของ multi-module ecosystem ที่อธิบายไว้ใน [CLAUDE.md ของ root repo](../CLAUDE.md) — depend on `minecraft-plugin-core` แบบ `compileOnly` + `depend: [MinecraftPluginCore]`
+ส่วนหนึ่งของ multi-module ecosystem ที่อธิบายไว้ใน [CLAUDE.md ของ root repo](../CLAUDE.md) — depend on `minecraft-plugin-core` แบบ `compileOnly` + `depend: [Core]` (ชื่อ plugin ใน `/pl` = `Healthbar`)
 
 ## Concept
 
@@ -53,7 +53,7 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 
 ## Config (`plugins/antitle/healthbar.yml`)
 
-> config เป็นไฟล์แบนในโฟลเดอร์รวมของ ecosystem ที่ `plugins/antitle/healthbar.yml` (ไม่ใช่ `plugins/HealthBarPlugin/`) — resolve ผ่าน `EcosystemData` ของ core ดู [CLAUDE.md → Config directory บน server](../CLAUDE.md#config-directory-บน-server)
+> config เป็นไฟล์แบนในโฟลเดอร์รวมของ ecosystem ที่ `plugins/antitle/healthbar.yml` (ไม่ใช่ `plugins/Healthbar/`) — resolve ผ่าน `EcosystemData` ของ core ดู [CLAUDE.md → Config directory บน server](../CLAUDE.md#config-directory-บน-server)
 
 ```yaml
 display:
@@ -74,7 +74,7 @@ colors:
 
 - depend on core เพราะใช้ `EcosystemData` (วาง config ในโฟลเดอร์รวม `plugins/antitle/`) + `PluginLog` (format log ให้เหมือนทั้ง ecosystem) — สองตัวนี้อยู่ใน core ตาม convention
 - **ไม่** register service เข้า `ServicesManager`, **ไม่** ขอ `DatabaseService`/`CoreApi.database(...)`, **ไม่** เปิด pool — เป็น plugin ที่ไม่มี persistent state (state อยู่ในเมมโมรี = หลอดที่กำลังโชว์ หายตอน restart ได้ไม่เป็นไร)
-- ยังต้องลง `minecraft-plugin-core.jar` บน server และตั้ง `depend: [MinecraftPluginCore]` ใน `plugin.yml` เพื่อให้ load ลำดับถูก
+- ยังต้องลง `minecraft-plugin-core.jar` บน server และตั้ง `depend: [Core]` ใน `plugin.yml` เพื่อให้ load ลำดับถูก
 
 ## Build
 
