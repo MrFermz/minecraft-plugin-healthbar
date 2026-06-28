@@ -46,7 +46,7 @@ public final class HealthBarPlugin extends JavaPlugin {
         this.manager = new HealthBarManager(this, settings, renderer);
         manager.start();
 
-        // Offer a per-player "bar vs number" choice via the shared Settings menu,
+        // Offer a per-player "bar vs number" choice via the shared in-game menu,
         // and read each hitter's choice live (CLAUDE.md → plugins talk through
         // core). Both are optional — health bars still work without them.
         CoreApi.settings(getServer()).ifPresent(registry -> registry.register(

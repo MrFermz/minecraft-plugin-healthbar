@@ -56,7 +56,7 @@ public final class HealthListener implements Listener {
             return;
         }
         // The bar is drawn in the hitter's chosen style (read live, so changing it
-        // in /setting takes effect on the next hit). Read the post-hit health one
+        // in /menu takes effect on the next hit). Read the post-hit health one
         // tick later (see syncBar).
         syncBar(victim, false, styleFor(damager));
     }
@@ -95,7 +95,7 @@ public final class HealthListener implements Listener {
         }, null);
     }
 
-    /** The display style the damager picked in {@code /setting}, defaulting to a bar. */
+    /** The display style the damager picked in {@code /menu}, defaulting to a bar. */
     private DisplayStyle styleFor(Player damager) {
         if (prefs == null) {
             return DisplayStyle.BAR;

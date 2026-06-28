@@ -4,7 +4,7 @@ import java.util.Locale;
 
 /**
  * How a health bar is drawn above an entity. Chosen per player via the in-game
- * {@code /setting} menu (key {@code healthbar.display}); the default is
+ * {@code /menu} (key {@code healthbar.display}); the default is
  * {@link #BAR}.
  *
  * <p>Because the bar is written into the entity's (shared) custom name, the style

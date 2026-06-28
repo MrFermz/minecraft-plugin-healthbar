@@ -10,8 +10,8 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 - **ถ้าเลือดเพิ่มไม่ว่าด้วยสาเหตุใด (regen, golden apple, potion ฯลฯ) หลอดที่กำลังโชว์อยู่จะอัปเดตเพิ่มตามด้วย** — แต่ heal จะไม่ทำให้หลอดเด้งขึ้นมาใหม่กับ entity ที่ไม่เคยโดนผู้เล่นตี
 - แสดงผ่าน **custom name ของ entity** เลย → **ผู้เล่นทุกคนที่อยู่ใกล้เห็นหลอดเดียวกัน** โดยไม่ต้องส่ง packet แยกรายคน
 - หลอดค้างอยู่ช่วงสั้น ๆ (`duration-seconds`, default 6 วิ) หลังโดนตีครั้งล่าสุด แล้วค่อย **คืนชื่อเดิม** ของ entity กลับไป
-- **รูปแบบหลอดเลือกได้ต่อผู้เล่น** (bar / number) ผ่าน `/setting` — ดู [Per-player display setting](#per-player-display-setting)
-- **ยังไม่มี command ของตัวเอง** (ตั้งค่าผ่าน `/setting` ของ plugin Settings)
+- **รูปแบบหลอดเลือกได้ต่อผู้เล่น** (bar / number) ผ่าน `/menu` — ดู [Per-player display setting](#per-player-display-setting)
+- **ยังไม่มี command ของตัวเอง** (ตั้งค่าผ่าน `/menu` ของ plugin Menu)
 
 ## หลอดเป็นยังไง
 
@@ -44,7 +44,7 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 
 ## Per-player display setting
 
-ผู้เล่นเลือกได้ว่าจะให้หลอดแสดงเป็นแบบไหน ผ่าน `/setting` (setting key `healthbar.display`):
+ผู้เล่นเลือกได้ว่าจะให้หลอดแสดงเป็นแบบไหน ผ่าน `/menu` (setting key `healthbar.display`):
 
 | ค่า | แสดงเป็น |
 |-----|----------|
@@ -53,7 +53,7 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 
 healthbar register `SettingDefinition` ตัวนี้เข้า `SettingsRegistry` ของ core ตอน `onEnable` แล้วอ่านค่าผู้เล่นผ่าน `PlayerPreferenceService` — plugin `Settings` เป็นคน render UI (คุยผ่าน core ตาม convention ไม่ reference ข้าม plugin)
 
-> **ข้อจำกัด:** หลอดเขียนลง custom name ของ entity ซึ่ง **เป็นชื่อเดียวที่ทุกคนเห็นร่วมกัน** — รูปแบบที่โชว์จึงเป็นของ **คนที่ตีครั้งล่าสุด** (ถ้าจะให้แต่ละคนเห็นคนละแบบจริง ๆ ต้องส่ง name packet แยกรายผู้ชม ซึ่งเป็นงานใหญ่กว่านี้) อ่านค่า setting แบบ realtime ทุกครั้งที่ตี → เปลี่ยนใน `/setting` แล้วมีผลกับการตีครั้งถัดไป
+> **ข้อจำกัด:** หลอดเขียนลง custom name ของ entity ซึ่ง **เป็นชื่อเดียวที่ทุกคนเห็นร่วมกัน** — รูปแบบที่โชว์จึงเป็นของ **คนที่ตีครั้งล่าสุด** (ถ้าจะให้แต่ละคนเห็นคนละแบบจริง ๆ ต้องส่ง name packet แยกรายผู้ชม ซึ่งเป็นงานใหญ่กว่านี้) อ่านค่า setting แบบ realtime ทุกครั้งที่ตี → เปลี่ยนใน `/menu` แล้วมีผลกับการตีครั้งถัดไป
 
 ## โครงสร้างโค้ด
 
