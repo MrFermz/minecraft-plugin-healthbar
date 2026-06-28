@@ -1,10 +1,15 @@
 package com.mrfermz.mcplugins.healthbar;
 
+import com.mrfermz.mcplugins.core.CoreApi;
 import com.mrfermz.mcplugins.core.EcosystemData;
 import com.mrfermz.mcplugins.core.log.PluginLog;
+import com.mrfermz.mcplugins.core.settings.PlayerPreferenceService;
+import com.mrfermz.mcplugins.core.settings.SettingDefinition;
 import com.mrfermz.mcplugins.healthbar.display.HealthBarManager;
 import com.mrfermz.mcplugins.healthbar.listener.HealthListener;
+import com.mrfermz.mcplugins.healthbar.render.DisplayStyle;
 import com.mrfermz.mcplugins.healthbar.render.HealthBarRenderer;
+import java.util.List;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -22,6 +27,9 @@ public final class HealthBarPlugin extends JavaPlugin {
     /** Short module name → plugins/antitle/healthbar.yml. */
     private static final String MODULE = "healthbar";
 
+    /** Per-player setting key (registered on core): bar vs. number display. */
+    public static final String DISPLAY_KEY = "healthbar.display";
+
     private PluginLog log;
     private HealthBarManager manager;
 
@@ -38,8 +46,20 @@ public final class HealthBarPlugin extends JavaPlugin {
         this.manager = new HealthBarManager(this, settings, renderer);
         manager.start();
 
+        // Offer a per-player "bar vs number" choice via the shared Settings menu,
+        // and read each hitter's choice live (CLAUDE.md → plugins talk through
+        // core). Both are optional — health bars still work without them.
+        CoreApi.settings(getServer()).ifPresent(registry -> registry.register(
+                SettingDefinition.choice(DISPLAY_KEY, "Healthbar",
+                        "Health bar display", "How damaged entities' health shows to you",
+                        List.of(
+                                new SettingDefinition.Option(DisplayStyle.BAR.key(), "Bar"),
+                                new SettingDefinition.Option(DisplayStyle.NUMBER.key(), "Number (current/total)")),
+                        DisplayStyle.BAR.key())));
+        PlayerPreferenceService prefs = CoreApi.preferences(getServer()).orElse(null);
+
         getServer().getPluginManager().registerEvents(
-                new HealthListener(this, settings, manager), this);
+                new HealthListener(this, settings, manager, prefs), this);
 
         log.info("Health bars ready (≤{} blocks, {} hp/block, {}s on screen, players: {}).",
                 settings.maxBlocks(),

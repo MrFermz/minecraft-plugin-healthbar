@@ -1,7 +1,10 @@
 package com.mrfermz.mcplugins.healthbar.listener;
 
+import com.mrfermz.mcplugins.core.settings.PlayerPreferenceService;
+import com.mrfermz.mcplugins.healthbar.HealthBarPlugin;
 import com.mrfermz.mcplugins.healthbar.HealthBarSettings;
 import com.mrfermz.mcplugins.healthbar.display.HealthBarManager;
+import com.mrfermz.mcplugins.healthbar.render.DisplayStyle;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -12,7 +15,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.projectiles.ProjectileSource;
 
 /**
  * Keeps the floating health bar in sync with an entity's health:
@@ -30,11 +32,15 @@ public final class HealthListener implements Listener {
     private final Plugin plugin;
     private final HealthBarSettings settings;
     private final HealthBarManager manager;
+    /** Per-player preferences from core; {@code null} if the service isn't available. */
+    private final PlayerPreferenceService prefs;
 
-    public HealthListener(Plugin plugin, HealthBarSettings settings, HealthBarManager manager) {
+    public HealthListener(Plugin plugin, HealthBarSettings settings, HealthBarManager manager,
+                          PlayerPreferenceService prefs) {
         this.plugin = plugin;
         this.settings = settings;
         this.manager = manager;
+        this.prefs = prefs;
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -45,11 +51,14 @@ public final class HealthListener implements Listener {
         if (victim instanceof Player && !settings.showOnPlayers()) {
             return;
         }
-        if (!isPlayerSource(event.getDamager())) {
+        Player damager = playerSource(event.getDamager());
+        if (damager == null) {
             return;
         }
-        // Read the post-hit health one tick later (see syncBar).
-        syncBar(victim, false);
+        // The bar is drawn in the hitter's chosen style (read live, so changing it
+        // in /setting takes effect on the next hit). Read the post-hit health one
+        // tick later (see syncBar).
+        syncBar(victim, false, styleFor(damager));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -58,7 +67,8 @@ public final class HealthListener implements Listener {
             return;
         }
         // Heal of any cause, but only if a bar is already showing on this entity.
-        syncBar(entity, true);
+        // Refresh keeps whatever style the bar already has, so style is irrelevant.
+        syncBar(entity, true, DisplayStyle.BAR);
     }
 
     /**
@@ -67,7 +77,7 @@ public final class HealthListener implements Listener {
      * value while the event is being handled. When {@code refreshOnly} is set the
      * bar is only updated if one is already visible (used for healing).
      */
-    private void syncBar(LivingEntity entity, boolean refreshOnly) {
+    private void syncBar(LivingEntity entity, boolean refreshOnly, DisplayStyle style) {
         entity.getScheduler().run(plugin, task -> {
             if (!entity.isValid() || entity.isDead()) {
                 return;
@@ -80,20 +90,29 @@ public final class HealthListener implements Listener {
             if (refreshOnly) {
                 manager.refresh(entity, current, max);
             } else {
-                manager.show(entity, current, max);
+                manager.show(entity, current, max, style);
             }
         }, null);
     }
 
-    /** True when the damage originates from a player, including their projectiles. */
-    private static boolean isPlayerSource(Entity damager) {
-        if (damager instanceof Player) {
-            return true;
+    /** The display style the damager picked in {@code /setting}, defaulting to a bar. */
+    private DisplayStyle styleFor(Player damager) {
+        if (prefs == null) {
+            return DisplayStyle.BAR;
         }
-        if (damager instanceof Projectile projectile) {
-            ProjectileSource shooter = projectile.getShooter();
-            return shooter instanceof Player;
+        return DisplayStyle.fromKey(prefs.get(damager.getUniqueId(),
+                HealthBarPlugin.DISPLAY_KEY, DisplayStyle.BAR.key()));
+    }
+
+    /** The player behind the damage (direct or via their projectile), or {@code null}. */
+    private static Player playerSource(Entity damager) {
+        if (damager instanceof Player player) {
+            return player;
         }
-        return false;
+        if (damager instanceof Projectile projectile
+                && projectile.getShooter() instanceof Player shooter) {
+            return shooter;
+        }
+        return null;
     }
 }

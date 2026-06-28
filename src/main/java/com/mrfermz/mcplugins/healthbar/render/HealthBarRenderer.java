@@ -32,11 +32,14 @@ public final class HealthBarRenderer {
     }
 
     /**
-     * Builds the bar for the given health values. {@code max <= 0} renders an
-     * empty (red) bar.
+     * Builds the display for the given health values in the requested
+     * {@link DisplayStyle}. {@code max <= 0} renders as empty/zero.
      */
-    public Component render(double current, double max) {
+    public Component render(double current, double max, DisplayStyle style) {
         double ratio = max <= 0 ? 0.0 : clamp(current / max, 0.0, 1.0);
+        if (style == DisplayStyle.NUMBER) {
+            return Component.text(number(current) + "/" + number(max), colorFor(ratio));
+        }
 
         // Bar length scales with the entity's real max health, capped at maxBlocks.
         int blocks = blocksFor(max);
@@ -76,5 +79,14 @@ public final class HealthBarRenderer {
 
     private static double clamp(double v, double lo, double hi) {
         return Math.max(lo, Math.min(hi, v));
+    }
+
+    /** Formats a health value as a whole number, or one decimal when fractional. */
+    private static String number(double value) {
+        double rounded = Math.max(0, value);
+        if (rounded == Math.rint(rounded)) {
+            return Long.toString((long) rounded);
+        }
+        return String.format(java.util.Locale.ROOT, "%.1f", rounded);
     }
 }

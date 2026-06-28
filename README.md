@@ -10,7 +10,8 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 - **ถ้าเลือดเพิ่มไม่ว่าด้วยสาเหตุใด (regen, golden apple, potion ฯลฯ) หลอดที่กำลังโชว์อยู่จะอัปเดตเพิ่มตามด้วย** — แต่ heal จะไม่ทำให้หลอดเด้งขึ้นมาใหม่กับ entity ที่ไม่เคยโดนผู้เล่นตี
 - แสดงผ่าน **custom name ของ entity** เลย → **ผู้เล่นทุกคนที่อยู่ใกล้เห็นหลอดเดียวกัน** โดยไม่ต้องส่ง packet แยกรายคน
 - หลอดค้างอยู่ช่วงสั้น ๆ (`duration-seconds`, default 6 วิ) หลังโดนตีครั้งล่าสุด แล้วค่อย **คืนชื่อเดิม** ของ entity กลับไป
-- **ยังไม่มี command** (ตามที่ตั้งใจไว้ตอนนี้)
+- **รูปแบบหลอดเลือกได้ต่อผู้เล่น** (bar / number) ผ่าน `/setting` — ดู [Per-player display setting](#per-player-display-setting)
+- **ยังไม่มี command ของตัวเอง** (ตั้งค่าผ่าน `/setting` ของ plugin Settings)
 
 ## หลอดเป็นยังไง
 
@@ -41,15 +42,29 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 
 > ถ้ายังมีเลือดเหลือ (current > 0) หลอดจะติดอย่างน้อย 1 ขีดเสมอ ไม่โชว์ว่างเปล่าทั้งที่ยังไม่ตาย
 
+## Per-player display setting
+
+ผู้เล่นเลือกได้ว่าจะให้หลอดแสดงเป็นแบบไหน ผ่าน `/setting` (setting key `healthbar.display`):
+
+| ค่า | แสดงเป็น |
+|-----|----------|
+| `bar` (default) | หลอดบล็อกสีตามด้านบน |
+| `number` | ตัวเลข `current/total` ติดสีตาม state เดียวกัน เช่น `15/20` |
+
+healthbar register `SettingDefinition` ตัวนี้เข้า `SettingsRegistry` ของ core ตอน `onEnable` แล้วอ่านค่าผู้เล่นผ่าน `PlayerPreferenceService` — plugin `Settings` เป็นคน render UI (คุยผ่าน core ตาม convention ไม่ reference ข้าม plugin)
+
+> **ข้อจำกัด:** หลอดเขียนลง custom name ของ entity ซึ่ง **เป็นชื่อเดียวที่ทุกคนเห็นร่วมกัน** — รูปแบบที่โชว์จึงเป็นของ **คนที่ตีครั้งล่าสุด** (ถ้าจะให้แต่ละคนเห็นคนละแบบจริง ๆ ต้องส่ง name packet แยกรายผู้ชม ซึ่งเป็นงานใหญ่กว่านี้) อ่านค่า setting แบบ realtime ทุกครั้งที่ตี → เปลี่ยนใน `/setting` แล้วมีผลกับการตีครั้งถัดไป
+
 ## โครงสร้างโค้ด
 
 | Class | หน้าที่ |
 |-------|---------|
 | `HealthBarPlugin` | entry point — โหลด config ผ่าน `EcosystemData`, สร้าง manager + renderer, register listener |
 | `HealthBarSettings` | record อ่านค่าจาก `healthbar.yml` |
-| `listener/HealthListener` | ฟัง `EntityDamageByEntityEvent` (กรองเฉพาะ damage จากผู้เล่น → `show` หลอด) + `EntityRegainHealthEvent` (heal ทุกสาเหตุ → `refresh` เฉพาะตัวที่หลอดโชว์อยู่) อ่านเลือดจริง 1 tick ถัดไปบน region thread ของ entity |
-| `display/HealthBarManager` | จำชื่อเดิมของ entity, set custom name เป็นหลอด (`show`/`refresh`), มี sweep ทุก 1 วิ คืนชื่อเดิมเมื่อหมดเวลา |
-| `render/HealthBarRenderer` | แปลง `current/max` เป็น Adventure `Component` หลอดสี + เลือกสีตาม state |
+| `listener/HealthListener` | ฟัง `EntityDamageByEntityEvent` (กรองเฉพาะ damage จากผู้เล่น → `show` หลอดในสไตล์ของคนตี) + `EntityRegainHealthEvent` (heal ทุกสาเหตุ → `refresh` เฉพาะตัวที่หลอดโชว์อยู่) อ่านเลือดจริง 1 tick ถัดไปบน region thread ของ entity; อ่าน `healthbar.display` ของคนตีผ่าน `PlayerPreferenceService` |
+| `display/HealthBarManager` | จำชื่อเดิม + สไตล์ของ entity, set custom name เป็นหลอด (`show`/`refresh`), มี sweep ทุก 1 วิ คืนชื่อเดิมเมื่อหมดเวลา |
+| `render/HealthBarRenderer` | แปลง `current/max` เป็น Adventure `Component` ตาม `DisplayStyle` (bar = หลอดสี / number = `current/total`) + เลือกสีตาม state |
+| `render/DisplayStyle` | enum `BAR`/`NUMBER` + parse จากค่า preference |
 
 ## Config (`plugins/antitle/healthbar.yml`)
 
@@ -70,10 +85,12 @@ colors:
 
 ## ต้องใช้ core plugin ไหม?
 
-**ต้อง — แต่ใช้แค่ระดับ config/logging ไม่แตะ database หรือ service ใด ๆ**
+**ต้อง — ใช้ config/logging + per-player settings ของ core แต่ไม่เปิด DB pool ของตัวเอง**
 
-- depend on core เพราะใช้ `EcosystemData` (วาง config ในโฟลเดอร์รวม `plugins/antitle/`) + `PluginLog` (format log ให้เหมือนทั้ง ecosystem) — สองตัวนี้อยู่ใน core ตาม convention
-- **ไม่** register service เข้า `ServicesManager`, **ไม่** ขอ `DatabaseService`/`CoreApi.database(...)`, **ไม่** เปิด pool — เป็น plugin ที่ไม่มี persistent state (state อยู่ในเมมโมรี = หลอดที่กำลังโชว์ หายตอน restart ได้ไม่เป็นไร)
+- depend on core เพราะใช้ `EcosystemData` (วาง config ในโฟลเดอร์รวม `plugins/antitle/`) + `PluginLog` (format log ให้เหมือนทั้ง ecosystem)
+- register `SettingDefinition` (`healthbar.display`) เข้า `SettingsRegistry` ของ core และอ่านค่าผู้เล่นผ่าน `PlayerPreferenceService` (`CoreApi.settings(...)` / `CoreApi.preferences(...)`) — ค่าเก็บในตาราง `setting_values` ของ **core** ไม่ใช่ของ healthbar
+- **ไม่** register service ของตัวเองเข้า `ServicesManager`, **ไม่** ขอ `DatabaseService`/เปิด pool, **ไม่** มีตารางของตัวเอง — state ของหลอด (ตัวที่กำลังโชว์) ยังอยู่ในเมมโมรี หายตอน restart ได้ไม่เป็นไร
+- ทั้ง setting registry + preference เป็น optional (`ifPresent`/null-check) ถ้า core DB ไม่พร้อม หลอดยังทำงานปกติด้วย default = bar
 - ยังต้องลง `minecraft-plugin-core.jar` บน server และตั้ง `depend: [Core]` ใน `plugin.yml` เพื่อให้ load ลำดับถูก
 
 ## Build

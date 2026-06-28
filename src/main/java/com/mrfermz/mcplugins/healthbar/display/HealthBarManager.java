@@ -1,6 +1,7 @@
 package com.mrfermz.mcplugins.healthbar.display;
 
 import com.mrfermz.mcplugins.healthbar.HealthBarSettings;
+import com.mrfermz.mcplugins.healthbar.render.DisplayStyle;
 import com.mrfermz.mcplugins.healthbar.render.HealthBarRenderer;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,7 +28,8 @@ import org.bukkit.plugin.Plugin;
 public final class HealthBarManager {
 
     /** Remembered state so the entity's real name can be put back. */
-    private record Tracked(Component originalName, boolean originalVisible, long expiresAt) {
+    private record Tracked(Component originalName, boolean originalVisible, long expiresAt,
+                           DisplayStyle style) {
     }
 
     private final Plugin plugin;
@@ -49,17 +51,19 @@ public final class HealthBarManager {
 
     /**
      * Shows (or refreshes) the bar above {@code entity} for the configured
-     * duration. Stores the entity's real name on first appearance.
+     * duration, drawn in {@code style} (the hitter's chosen display). Stores the
+     * entity's real name on first appearance.
      */
-    public void show(LivingEntity entity, double current, double max) {
+    public void show(LivingEntity entity, double current, double max, DisplayStyle style) {
         UUID id = entity.getUniqueId();
         active.compute(id, (key, existing) -> {
             Component original = existing != null ? existing.originalName() : entity.customName();
             boolean visible = existing != null ? existing.originalVisible() : entity.isCustomNameVisible();
-            return new Tracked(original, visible, System.currentTimeMillis() + settings.durationMillis());
+            return new Tracked(original, visible,
+                    System.currentTimeMillis() + settings.durationMillis(), style);
         });
 
-        entity.customName(renderer.render(current, max));
+        entity.customName(renderer.render(current, max, style));
         entity.setCustomNameVisible(true);
     }
 
@@ -76,8 +80,8 @@ public final class HealthBarManager {
             return false;
         }
         active.put(id, new Tracked(existing.originalName(), existing.originalVisible(),
-                System.currentTimeMillis() + settings.durationMillis()));
-        entity.customName(renderer.render(current, max));
+                System.currentTimeMillis() + settings.durationMillis(), existing.style()));
+        entity.customName(renderer.render(current, max, existing.style()));
         entity.setCustomNameVisible(true);
         return true;
     }
