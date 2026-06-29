@@ -10,7 +10,7 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 - **ถ้าเลือดเพิ่มไม่ว่าด้วยสาเหตุใด (regen, golden apple, potion ฯลฯ) หลอดที่กำลังโชว์อยู่จะอัปเดตเพิ่มตามด้วย** — แต่ heal จะไม่ทำให้หลอดเด้งขึ้นมาใหม่กับ entity ที่ไม่เคยโดนผู้เล่นตี
 - แสดงผ่าน **custom name ของ entity** เลย → **ผู้เล่นทุกคนที่อยู่ใกล้เห็นหลอดเดียวกัน** โดยไม่ต้องส่ง packet แยกรายคน
 - หลอดค้างอยู่ช่วงสั้น ๆ (`duration-seconds`, default 6 วิ) หลังโดนตีครั้งล่าสุด แล้วค่อย **คืนชื่อเดิม** ของ entity กลับไป
-- **รูปแบบหลอดเลือกได้ต่อผู้เล่น** (bar / number) ผ่าน `/menu` — ดู [Per-player display setting](#per-player-display-setting)
+- **ต่อผู้เล่นปรับได้ผ่าน `/menu`** — เปิด/ปิดหลอด + เลือกรูปแบบ (bar / number) ดู [Per-player settings](#per-player-settings-หมวด-health-bar-ใน-menu)
 - **ยังไม่มี command ของตัวเอง** (ตั้งค่าผ่าน `/menu` ของ plugin Menu)
 
 ## หลอดเป็นยังไง
@@ -42,16 +42,14 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 
 > ถ้ายังมีเลือดเหลือ (current > 0) หลอดจะติดอย่างน้อย 1 ขีดเสมอ ไม่โชว์ว่างเปล่าทั้งที่ยังไม่ตาย
 
-## Per-player display setting
+## Per-player settings (หมวด `Health bar` ใน `/menu`)
 
-ผู้เล่นเลือกได้ว่าจะให้หลอดแสดงเป็นแบบไหน ผ่าน `/menu` (setting key `healthbar.display`):
+ผู้เล่นปรับเองได้ผ่าน `/menu` (healthbar register เข้า `MenuRegistry` ของ core ตอน `onEnable`, อ่านค่าผ่าน `PlayerPreferenceService` แบบ realtime ทุกครั้งที่ตี — plugin `Menu` เป็นคน render UI, คุยผ่าน core ตาม convention ไม่ reference ข้าม plugin):
 
-| ค่า | แสดงเป็น |
-|-----|----------|
-| `bar` (default) | หลอดบล็อกสีตามด้านบน |
-| `number` | ตัวเลข `current/total` ติดสีตาม state เดียวกัน เช่น `15/20` |
-
-healthbar register `MenuItem` ตัวนี้เข้า `MenuRegistry` ของ core ตอน `onEnable` แล้วอ่านค่าผู้เล่นผ่าน `PlayerPreferenceService` — plugin `Menu` เป็นคน render UI (คุยผ่าน core ตาม convention ไม่ reference ข้าม plugin)
+| setting key | ชนิด | ค่า | ความหมาย |
+|-------------|------|-----|----------|
+| `healthbar.enabled` | toggle (checkbox) | default เปิด | ปิดแล้ว = ตอน**คนนี้**ตี entity จะไม่ขึ้นหลอด |
+| `healthbar.display` | choice | `bar` (default) / `number` | `bar` = หลอดบล็อกสี; `number` = ตัวเลข `current/total` ติดสีตาม state เช่น `15/20` |
 
 > **ข้อจำกัด:** หลอดเขียนลง custom name ของ entity ซึ่ง **เป็นชื่อเดียวที่ทุกคนเห็นร่วมกัน** — รูปแบบที่โชว์จึงเป็นของ **คนที่ตีครั้งล่าสุด** (ถ้าจะให้แต่ละคนเห็นคนละแบบจริง ๆ ต้องส่ง name packet แยกรายผู้ชม ซึ่งเป็นงานใหญ่กว่านี้) อ่านค่า setting แบบ realtime ทุกครั้งที่ตี → เปลี่ยนใน `/menu` แล้วมีผลกับการตีครั้งถัดไป
 
@@ -88,7 +86,7 @@ colors:
 **ต้อง — ใช้ config/logging + per-player settings ของ core แต่ไม่เปิด DB pool ของตัวเอง**
 
 - depend on core เพราะใช้ `EcosystemData` (วาง config ในโฟลเดอร์รวม `plugins/antitle/`) + `PluginLog` (format log ให้เหมือนทั้ง ecosystem)
-- register `MenuItem` (`healthbar.display`) เข้า `MenuRegistry` ของ core และอ่านค่าผู้เล่นผ่าน `PlayerPreferenceService` (`CoreApi.menu(...)` / `CoreApi.preferences(...)`) — ค่าเก็บในตาราง `setting_values` ของ **core** ไม่ใช่ของ healthbar
+- register `MenuItem` (`healthbar.enabled`, `healthbar.display`) เข้า `MenuRegistry` ของ core และอ่านค่าผู้เล่นผ่าน `PlayerPreferenceService` (`CoreApi.menu(...)` / `CoreApi.preferences(...)`) — ค่าเก็บในตาราง `setting_values` ของ **core** ไม่ใช่ของ healthbar
 - **ไม่** register service ของตัวเองเข้า `ServicesManager`, **ไม่** ขอ `DatabaseService`/เปิด pool, **ไม่** มีตารางของตัวเอง — state ของหลอด (ตัวที่กำลังโชว์) ยังอยู่ในเมมโมรี หายตอน restart ได้ไม่เป็นไร
 - ทั้ง setting registry + preference เป็น optional (`ifPresent`/null-check) ถ้า core DB ไม่พร้อม หลอดยังทำงานปกติด้วย default = bar
 - ยังต้องลง `minecraft-plugin-core.jar` บน server และตั้ง `depend: [Core]` ใน `plugin.yml` เพื่อให้ load ลำดับถูก

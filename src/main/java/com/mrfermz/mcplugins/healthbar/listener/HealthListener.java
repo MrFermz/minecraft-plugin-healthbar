@@ -55,6 +55,10 @@ public final class HealthListener implements Listener {
         if (damager == null) {
             return;
         }
+        // Respect the hitter's "show health bars" toggle (read live from /menu).
+        if (prefs != null && !prefs.getBoolean(damager.getUniqueId(), HealthBarPlugin.ENABLED_KEY, true)) {
+            return;
+        }
         // The bar is drawn in the hitter's chosen style (read live, so changing it
         // in /menu takes effect on the next hit). Read the post-hit health one
         // tick later (see syncBar).

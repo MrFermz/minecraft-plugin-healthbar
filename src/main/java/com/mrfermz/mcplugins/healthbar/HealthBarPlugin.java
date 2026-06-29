@@ -27,8 +27,14 @@ public final class HealthBarPlugin extends JavaPlugin {
     /** Short module name → plugins/antitle/healthbar.yml. */
     private static final String MODULE = "healthbar";
 
+    /** Per-player setting key (registered on core): show health bars at all. */
+    public static final String ENABLED_KEY = "healthbar.enabled";
+
     /** Per-player setting key (registered on core): bar vs. number display. */
     public static final String DISPLAY_KEY = "healthbar.display";
+
+    /** Menu category these options group under. */
+    private static final String CATEGORY = "Health bar";
 
     private PluginLog log;
     private HealthBarManager manager;
@@ -46,16 +52,20 @@ public final class HealthBarPlugin extends JavaPlugin {
         this.manager = new HealthBarManager(this, settings, renderer);
         manager.start();
 
-        // Offer a per-player "bar vs number" choice via the shared in-game menu,
-        // and read each hitter's choice live (CLAUDE.md → plugins talk through
-        // core). Both are optional — health bars still work without them.
-        CoreApi.menu(getServer()).ifPresent(registry -> registry.register(
-                MenuItem.choice(DISPLAY_KEY, "Healthbar",
-                        "Health bar display", "How damaged entities' health shows to you",
-                        List.of(
-                                new MenuItem.Option(DisplayStyle.BAR.key(), "Bar"),
-                                new MenuItem.Option(DisplayStyle.NUMBER.key(), "Number (current/total)")),
-                        DisplayStyle.BAR.key())));
+        // Offer per-player options via the shared in-game menu, read live for each
+        // hitter (CLAUDE.md → plugins talk through core). All optional — health
+        // bars still work without them.
+        CoreApi.menu(getServer()).ifPresent(registry -> {
+            registry.register(MenuItem.toggle(ENABLED_KEY, CATEGORY,
+                    "Show health bars",
+                    "Show floating health bars when you hit something", true));
+            registry.register(MenuItem.choice(DISPLAY_KEY, CATEGORY,
+                    "Health bar display", "How damaged entities' health shows to you",
+                    List.of(
+                            new MenuItem.Option(DisplayStyle.BAR.key(), "Bar"),
+                            new MenuItem.Option(DisplayStyle.NUMBER.key(), "Number")),
+                    DisplayStyle.BAR.key()));
+        });
         PlayerPreferenceService prefs = CoreApi.preferences(getServer()).orElse(null);
 
         getServer().getPluginManager().registerEvents(
