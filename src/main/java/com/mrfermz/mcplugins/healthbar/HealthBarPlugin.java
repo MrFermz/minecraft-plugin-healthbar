@@ -3,8 +3,8 @@ package com.mrfermz.mcplugins.healthbar;
 import com.mrfermz.mcplugins.core.CoreApi;
 import com.mrfermz.mcplugins.core.EcosystemData;
 import com.mrfermz.mcplugins.core.log.PluginLog;
-import com.mrfermz.mcplugins.core.settings.PlayerPreferenceService;
-import com.mrfermz.mcplugins.core.settings.SettingDefinition;
+import com.mrfermz.mcplugins.core.menu.MenuItem;
+import com.mrfermz.mcplugins.core.menu.PlayerPreferenceService;
 import com.mrfermz.mcplugins.healthbar.display.HealthBarManager;
 import com.mrfermz.mcplugins.healthbar.listener.HealthListener;
 import com.mrfermz.mcplugins.healthbar.render.DisplayStyle;
@@ -49,12 +49,12 @@ public final class HealthBarPlugin extends JavaPlugin {
         // Offer a per-player "bar vs number" choice via the shared in-game menu,
         // and read each hitter's choice live (CLAUDE.md → plugins talk through
         // core). Both are optional — health bars still work without them.
-        CoreApi.settings(getServer()).ifPresent(registry -> registry.register(
-                SettingDefinition.choice(DISPLAY_KEY, "Healthbar",
+        CoreApi.menu(getServer()).ifPresent(registry -> registry.register(
+                MenuItem.choice(DISPLAY_KEY, "Healthbar",
                         "Health bar display", "How damaged entities' health shows to you",
                         List.of(
-                                new SettingDefinition.Option(DisplayStyle.BAR.key(), "Bar"),
-                                new SettingDefinition.Option(DisplayStyle.NUMBER.key(), "Number (current/total)")),
+                                new MenuItem.Option(DisplayStyle.BAR.key(), "Bar"),
+                                new MenuItem.Option(DisplayStyle.NUMBER.key(), "Number (current/total)")),
                         DisplayStyle.BAR.key())));
         PlayerPreferenceService prefs = CoreApi.preferences(getServer()).orElse(null);
 

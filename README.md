@@ -51,7 +51,7 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 | `bar` (default) | หลอดบล็อกสีตามด้านบน |
 | `number` | ตัวเลข `current/total` ติดสีตาม state เดียวกัน เช่น `15/20` |
 
-healthbar register `SettingDefinition` ตัวนี้เข้า `SettingsRegistry` ของ core ตอน `onEnable` แล้วอ่านค่าผู้เล่นผ่าน `PlayerPreferenceService` — plugin `Settings` เป็นคน render UI (คุยผ่าน core ตาม convention ไม่ reference ข้าม plugin)
+healthbar register `MenuItem` ตัวนี้เข้า `MenuRegistry` ของ core ตอน `onEnable` แล้วอ่านค่าผู้เล่นผ่าน `PlayerPreferenceService` — plugin `Menu` เป็นคน render UI (คุยผ่าน core ตาม convention ไม่ reference ข้าม plugin)
 
 > **ข้อจำกัด:** หลอดเขียนลง custom name ของ entity ซึ่ง **เป็นชื่อเดียวที่ทุกคนเห็นร่วมกัน** — รูปแบบที่โชว์จึงเป็นของ **คนที่ตีครั้งล่าสุด** (ถ้าจะให้แต่ละคนเห็นคนละแบบจริง ๆ ต้องส่ง name packet แยกรายผู้ชม ซึ่งเป็นงานใหญ่กว่านี้) อ่านค่า setting แบบ realtime ทุกครั้งที่ตี → เปลี่ยนใน `/menu` แล้วมีผลกับการตีครั้งถัดไป
 
@@ -88,7 +88,7 @@ colors:
 **ต้อง — ใช้ config/logging + per-player settings ของ core แต่ไม่เปิด DB pool ของตัวเอง**
 
 - depend on core เพราะใช้ `EcosystemData` (วาง config ในโฟลเดอร์รวม `plugins/antitle/`) + `PluginLog` (format log ให้เหมือนทั้ง ecosystem)
-- register `SettingDefinition` (`healthbar.display`) เข้า `SettingsRegistry` ของ core และอ่านค่าผู้เล่นผ่าน `PlayerPreferenceService` (`CoreApi.settings(...)` / `CoreApi.preferences(...)`) — ค่าเก็บในตาราง `setting_values` ของ **core** ไม่ใช่ของ healthbar
+- register `MenuItem` (`healthbar.display`) เข้า `MenuRegistry` ของ core และอ่านค่าผู้เล่นผ่าน `PlayerPreferenceService` (`CoreApi.menu(...)` / `CoreApi.preferences(...)`) — ค่าเก็บในตาราง `setting_values` ของ **core** ไม่ใช่ของ healthbar
 - **ไม่** register service ของตัวเองเข้า `ServicesManager`, **ไม่** ขอ `DatabaseService`/เปิด pool, **ไม่** มีตารางของตัวเอง — state ของหลอด (ตัวที่กำลังโชว์) ยังอยู่ในเมมโมรี หายตอน restart ได้ไม่เป็นไร
 - ทั้ง setting registry + preference เป็น optional (`ifPresent`/null-check) ถ้า core DB ไม่พร้อม หลอดยังทำงานปกติด้วย default = bar
 - ยังต้องลง `minecraft-plugin-core.jar` บน server และตั้ง `depend: [Core]` ใน `plugin.yml` เพื่อให้ load ลำดับถูก

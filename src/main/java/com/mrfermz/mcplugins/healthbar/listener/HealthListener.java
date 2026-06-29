@@ -1,6 +1,6 @@
 package com.mrfermz.mcplugins.healthbar.listener;
 
-import com.mrfermz.mcplugins.core.settings.PlayerPreferenceService;
+import com.mrfermz.mcplugins.core.menu.PlayerPreferenceService;
 import com.mrfermz.mcplugins.healthbar.HealthBarPlugin;
 import com.mrfermz.mcplugins.healthbar.HealthBarSettings;
 import com.mrfermz.mcplugins.healthbar.display.HealthBarManager;
