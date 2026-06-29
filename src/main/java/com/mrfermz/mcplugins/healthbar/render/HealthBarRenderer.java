@@ -22,7 +22,10 @@ public final class HealthBarRenderer {
     private static final TextColor GREEN = TextColor.color(0x55FF55);
     private static final TextColor ORANGE = TextColor.color(0xFFAA00);
     private static final TextColor RED = TextColor.color(0xFF5555);
-    /** Colour of the lost-health (empty) part of the bar. */
+    /**
+     * Colour of the lost-health segments: a dim grey that blends into the
+     * background yet stays readable, so the bar's full length is always visible.
+     */
     private static final TextColor EMPTY = TextColor.color(0x555555);
 
     private final HealthBarSettings settings;
@@ -33,9 +36,12 @@ public final class HealthBarRenderer {
 
     /**
      * Builds the display for the given health values in the requested
-     * {@link DisplayStyle}. {@code max <= 0} renders as empty/zero.
+     * {@link DisplayStyle}, drawing a bar out of {@code icon} (the per-player
+     * choice from {@code /menu}; blank → the configured {@code bar-icon}). The same
+     * icon draws both the remaining segments (state colour) and the lost segments
+     * (dim grey), so the bar keeps one shape. {@code max <= 0} renders as empty/zero.
      */
-    public Component render(double current, double max, DisplayStyle style) {
+    public Component render(double current, double max, DisplayStyle style, String icon) {
         double ratio = max <= 0 ? 0.0 : clamp(current / max, 0.0, 1.0);
         if (style == DisplayStyle.NUMBER) {
             return Component.text(number(current) + "/" + number(max), colorFor(ratio));
@@ -52,9 +58,11 @@ public final class HealthBarRenderer {
         int empty = blocks - filled;
 
         TextColor color = colorFor(ratio);
+        // Per-player icon; blank (no preference) falls back to config (█).
+        String glyph = (icon == null || icon.isBlank()) ? settings.barIcon() : icon;
 
-        return Component.text(settings.filledChar().repeat(filled), color)
-                .append(Component.text(settings.emptyChar().repeat(empty), EMPTY));
+        return Component.text(glyph.repeat(filled), color)
+                .append(Component.text(glyph.repeat(empty), EMPTY));
     }
 
     /**

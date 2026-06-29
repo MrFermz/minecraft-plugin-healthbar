@@ -7,8 +7,10 @@ import com.mrfermz.mcplugins.core.menu.MenuItem;
 import com.mrfermz.mcplugins.core.menu.PlayerPreferenceService;
 import com.mrfermz.mcplugins.healthbar.display.HealthBarManager;
 import com.mrfermz.mcplugins.healthbar.listener.HealthListener;
+import com.mrfermz.mcplugins.healthbar.render.BarIcon;
 import com.mrfermz.mcplugins.healthbar.render.DisplayStyle;
 import com.mrfermz.mcplugins.healthbar.render.HealthBarRenderer;
+import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -32,6 +34,9 @@ public final class HealthBarPlugin extends JavaPlugin {
 
     /** Per-player setting key (registered on core): bar vs. number display. */
     public static final String DISPLAY_KEY = "healthbar.display";
+
+    /** Per-player setting key (registered on core): which icon the bar is drawn with. */
+    public static final String ICON_KEY = "healthbar.icon";
 
     /** Menu category these options group under. */
     private static final String CATEGORY = "Health bar";
@@ -65,6 +70,15 @@ public final class HealthBarPlugin extends JavaPlugin {
                             new MenuItem.Option(DisplayStyle.BAR.key(), "Bar"),
                             new MenuItem.Option(DisplayStyle.NUMBER.key(), "Number")),
                     DisplayStyle.BAR.key()));
+            // Pick the icon the bar is drawn with (block, heart, star, …). The
+            // lost-health part uses the same icon dimmed, so the bar keeps its shape.
+            List<MenuItem.Option> icons = new ArrayList<>();
+            for (BarIcon icon : BarIcon.values()) {
+                icons.add(new MenuItem.Option(icon.key(), icon.label() + " " + icon.icon()));
+            }
+            registry.register(MenuItem.choice(ICON_KEY, CATEGORY,
+                    "Health bar icon", "Which icon the bar is drawn with",
+                    icons, BarIcon.BLOCK.key()));
         });
         PlayerPreferenceService prefs = CoreApi.preferences(getServer()).orElse(null);
 

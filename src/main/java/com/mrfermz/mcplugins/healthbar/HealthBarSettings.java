@@ -11,8 +11,7 @@ import org.bukkit.configuration.file.FileConfiguration;
  *
  * @param hpPerBlock    how much max health one block represents
  * @param maxBlocks     hard cap on the bar length (and the floor is always 1)
- * @param filledChar    character drawn for the remaining-health part
- * @param emptyChar     character drawn for the lost-health part
+ * @param barIcon       fallback bar character when a player hasn't picked an icon
  * @param showOnPlayers also render the bar above players, not just mobs
  * @param greenAbove    ratio at/above which the bar is green
  * @param redBelow      ratio below which the bar is red (orange in between)
@@ -21,8 +20,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 public record HealthBarSettings(
         double hpPerBlock,
         int maxBlocks,
-        String filledChar,
-        String emptyChar,
+        String barIcon,
         boolean showOnPlayers,
         double greenAbove,
         double redBelow,
@@ -33,8 +31,7 @@ public record HealthBarSettings(
         return new HealthBarSettings(
                 Math.max(0.1, cfg.getDouble("display.hp-per-block", 2.0)),
                 Math.max(1, cfg.getInt("display.max-blocks", 10)),
-                cfg.getString("display.filled-char", "█"),
-                cfg.getString("display.empty-char", "█"),
+                cfg.getString("display.bar-icon", "█"),
                 cfg.getBoolean("display.show-on-players", false),
                 cfg.getDouble("colors.green-above", 0.5),
                 cfg.getDouble("colors.red-below", 0.25),

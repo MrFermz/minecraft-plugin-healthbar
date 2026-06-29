@@ -11,11 +11,11 @@ display:
   hp-per-block: 2.0
   # Hard cap on the bar length (the floor is always 1 block).
   max-blocks: 10
-  # Character used for the filled (remaining health) part of the bar.
-  # Defaults to the full block U+2588 so the bar reads as one solid strip.
-  filled-char: "█"
-  # Character used for the empty (lost health) part of the bar.
-  empty-char: "█"
+  # Fallback bar icon, used only until a player picks one in /menu
+  # (healthbar.icon: block / heart / star / circle / square). Defaults to the
+  # full block U+2588 so the bar reads as one solid strip. The same icon draws
+  # both the remaining (coloured) and lost (dim grey) segments.
+  bar-icon: "█"
   # Also show the bar above players, not just mobs.
   show-on-players: false
 

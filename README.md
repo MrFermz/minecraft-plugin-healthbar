@@ -15,7 +15,17 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 
 ## หลอดเป็นยังไง
 
-เป็นแถบทึบแนวนอน ใช้อักขระบล็อกทึบ `█` (U+2588) ต่อกัน ส่วนที่เลือดยังเหลือ = ติดสีตาม state, ส่วนที่หายไป = สีเทาเข้ม (ไม่มีตัวเลขกำกับ)
+เป็นแถบแนวนอนที่วาดด้วย **icon** ต่อกัน (default `█` U+2588) ส่วนที่เลือดยังเหลือ = icon ติดสีตาม state, ส่วนที่หายไป = **icon ตัวเดิม** แต่เป็นสีเทาเข้ม (`0x555555`) ที่กลืนพื้นหลังแต่ยังเห็นอยู่ → หลอดคงรูปทรงเดิมเสมอ ไม่หดหายตอนเลือดลด (ไม่มีตัวเลขกำกับ)
+
+**เลือก icon ของหลอดได้ต่อผู้เล่นใน `/menu`** (`healthbar.icon`) — 5 แบบ:
+
+| key | icon | ตัวอย่างหลอด (เหลือ 3/5) |
+|-----|:----:|--------------------------|
+| `block` (default) | `█` | `███`<span style="color:#555">`██`</span> |
+| `heart` | `❤` | `❤❤❤`<span style="color:#555">`❤❤`</span> |
+| `star` | `★` | `★★★`<span style="color:#555">`★★`</span> |
+| `circle` | `●` | `●●●`<span style="color:#555">`●●`</span> |
+| `square` | `■` | `■■■`<span style="color:#555">`■■`</span> |
 
 **ความยาวหลอดคิดจาก max HP จริงของ entity** ไม่ใช่ค่าคงที่ — `blocks = round(maxHP / hp-per-block)` แล้ว clamp อยู่ในช่วง **1–`max-blocks` block** (default cap 10) → mob ยิ่งอึดหลอดยิ่งยาว แต่ไม่เกิน 10
 
@@ -27,7 +37,7 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 
 ```
 ██████████   (เต็ม, เขียว — ซอมบี้ 20 HP = 10 block)
-██████░░░░    (ส้ม — █ ติดสี, ░ บล็อกสีเทา)
+██████░░░░    (ส้ม — ░ = icon เดิมแต่สีเทาเข้ม ไม่ใช่คนละตัว)
 ██░░░░░░░░    (แดง)
 ██           (ไก่ 4 HP = 2 block เต็ม)
 ```
@@ -50,6 +60,7 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 |-------------|------|-----|----------|
 | `healthbar.enabled` | toggle (checkbox) | default เปิด | ปิดแล้ว = ตอน**คนนี้**ตี entity จะไม่ขึ้นหลอด |
 | `healthbar.display` | choice | `bar` (default) / `number` | `bar` = หลอดบล็อกสี; `number` = ตัวเลข `current/total` ติดสีตาม state เช่น `15/20` |
+| `healthbar.icon` | choice | `block` (default) / `heart` / `star` / `circle` / `square` | icon ที่ใช้วาดหลอด (เฉพาะสไตล์ `bar`) — ส่วนเลือดที่หายไปใช้ icon เดิมแต่สีเทาเข้ม |
 
 > **ข้อจำกัด:** หลอดเขียนลง custom name ของ entity ซึ่ง **เป็นชื่อเดียวที่ทุกคนเห็นร่วมกัน** — รูปแบบที่โชว์จึงเป็นของ **คนที่ตีครั้งล่าสุด** (ถ้าจะให้แต่ละคนเห็นคนละแบบจริง ๆ ต้องส่ง name packet แยกรายผู้ชม ซึ่งเป็นงานใหญ่กว่านี้) อ่านค่า setting แบบ realtime ทุกครั้งที่ตี → เปลี่ยนใน `/menu` แล้วมีผลกับการตีครั้งถัดไป
 
@@ -59,10 +70,11 @@ Plugin แสดง **หลอดเลือด (health bar)** ลอยอย
 |-------|---------|
 | `HealthBarPlugin` | entry point — โหลด config ผ่าน `EcosystemData`, สร้าง manager + renderer, register listener |
 | `HealthBarSettings` | record อ่านค่าจาก `healthbar.yml` |
-| `listener/HealthListener` | ฟัง `EntityDamageByEntityEvent` (กรองเฉพาะ damage จากผู้เล่น → `show` หลอดในสไตล์ของคนตี) + `EntityRegainHealthEvent` (heal ทุกสาเหตุ → `refresh` เฉพาะตัวที่หลอดโชว์อยู่) อ่านเลือดจริง 1 tick ถัดไปบน region thread ของ entity; อ่าน `healthbar.display` ของคนตีผ่าน `PlayerPreferenceService` |
-| `display/HealthBarManager` | จำชื่อเดิม + สไตล์ของ entity, set custom name เป็นหลอด (`show`/`refresh`), มี sweep ทุก 1 วิ คืนชื่อเดิมเมื่อหมดเวลา |
-| `render/HealthBarRenderer` | แปลง `current/max` เป็น Adventure `Component` ตาม `DisplayStyle` (bar = หลอดสี / number = `current/total`) + เลือกสีตาม state |
+| `listener/HealthListener` | ฟัง `EntityDamageByEntityEvent` (กรองเฉพาะ damage จากผู้เล่น → `show` หลอดในสไตล์ของคนตี) + `EntityRegainHealthEvent` (heal ทุกสาเหตุ → `refresh` เฉพาะตัวที่หลอดโชว์อยู่) อ่านเลือดจริง 1 tick ถัดไปบน region thread ของ entity; อ่าน `healthbar.display` + `healthbar.icon` ของคนตีผ่าน `PlayerPreferenceService` |
+| `display/HealthBarManager` | จำชื่อเดิม + สไตล์ + icon ของ entity, set custom name เป็นหลอด (`show`/`refresh`), มี sweep ทุก 1 วิ คืนชื่อเดิมเมื่อหมดเวลา |
+| `render/HealthBarRenderer` | แปลง `current/max` เป็น Adventure `Component` ตาม `DisplayStyle` (bar = หลอดสีวาดด้วย icon, ส่วนหายใช้ icon เดิมสีเทาเข้ม / number = `current/total`) + เลือกสีตาม state |
 | `render/DisplayStyle` | enum `BAR`/`NUMBER` + parse จากค่า preference |
+| `render/BarIcon` | enum icon 5 แบบ (`BLOCK`/`HEART`/`STAR`/`CIRCLE`/`SQUARE`) — key + อักขระ + label สำหรับ dropdown ใน `/menu` |
 
 ## Config (`plugins/antitle/healthbar.yml`)
 
@@ -73,8 +85,7 @@ display:
   duration-seconds: 6     # หลอดค้างกี่วินาทีหลังโดนตีครั้งล่าสุด
   hp-per-block: 2.0       # 1 block = กี่ HP (blocks = round(maxHP / ค่านี้))
   max-blocks: 10          # เพดานความยาวหลอด (พื้นอย่างน้อย 1 block เสมอ)
-  filled-char: "█"        # อักขระส่วนเลือดที่เหลือ (default บล็อกทึบ U+2588)
-  empty-char: "█"         # อักขระส่วนเลือดที่หาย
+  bar-icon: "█"           # icon fallback ก่อนผู้เล่นเลือกใน /menu (default บล็อกทึบ U+2588)
   show-on-players: false  # โชว์เหนือหัวผู้เล่นด้วยไหม (default เฉพาะ mob)
 colors:
   green-above: 0.5        # ratio >= ค่านี้ = เขียว
@@ -86,7 +97,7 @@ colors:
 **ต้อง — ใช้ config/logging + per-player settings ของ core แต่ไม่เปิด DB pool ของตัวเอง**
 
 - depend on core เพราะใช้ `EcosystemData` (วาง config ในโฟลเดอร์รวม `plugins/antitle/`) + `PluginLog` (format log ให้เหมือนทั้ง ecosystem)
-- register `MenuItem` (`healthbar.enabled`, `healthbar.display`) เข้า `MenuRegistry` ของ core และอ่านค่าผู้เล่นผ่าน `PlayerPreferenceService` (`CoreApi.menu(...)` / `CoreApi.preferences(...)`) — ค่าเก็บในตาราง `setting_values` ของ **core** ไม่ใช่ของ healthbar
+- register `MenuItem` (`healthbar.enabled`, `healthbar.display`, `healthbar.icon`) เข้า `MenuRegistry` ของ core และอ่านค่าผู้เล่นผ่าน `PlayerPreferenceService` (`CoreApi.menu(...)` / `CoreApi.preferences(...)`) — ค่าเก็บในตาราง `setting_values` ของ **core** ไม่ใช่ของ healthbar
 - **ไม่** register service ของตัวเองเข้า `ServicesManager`, **ไม่** ขอ `DatabaseService`/เปิด pool, **ไม่** มีตารางของตัวเอง — state ของหลอด (ตัวที่กำลังโชว์) ยังอยู่ในเมมโมรี หายตอน restart ได้ไม่เป็นไร
 - ทั้ง setting registry + preference เป็น optional (`ifPresent`/null-check) ถ้า core DB ไม่พร้อม หลอดยังทำงานปกติด้วย default = bar
 - ยังต้องลง `minecraft-plugin-core.jar` บน server และตั้ง `depend: [Core]` ใน `plugin.yml` เพื่อให้ load ลำดับถูก

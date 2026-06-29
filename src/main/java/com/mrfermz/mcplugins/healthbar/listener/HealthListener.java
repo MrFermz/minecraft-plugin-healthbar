@@ -4,6 +4,7 @@ import com.mrfermz.mcplugins.core.menu.PlayerPreferenceService;
 import com.mrfermz.mcplugins.healthbar.HealthBarPlugin;
 import com.mrfermz.mcplugins.healthbar.HealthBarSettings;
 import com.mrfermz.mcplugins.healthbar.display.HealthBarManager;
+import com.mrfermz.mcplugins.healthbar.render.BarIcon;
 import com.mrfermz.mcplugins.healthbar.render.DisplayStyle;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -59,10 +60,10 @@ public final class HealthListener implements Listener {
         if (prefs != null && !prefs.getBoolean(damager.getUniqueId(), HealthBarPlugin.ENABLED_KEY, true)) {
             return;
         }
-        // The bar is drawn in the hitter's chosen style (read live, so changing it
-        // in /menu takes effect on the next hit). Read the post-hit health one
-        // tick later (see syncBar).
-        syncBar(victim, false, styleFor(damager));
+        // The bar is drawn in the hitter's chosen style and icon (read live, so
+        // changing either in /menu takes effect on the next hit). Read the post-hit
+        // health one tick later (see syncBar).
+        syncBar(victim, false, styleFor(damager), iconFor(damager));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -71,8 +72,8 @@ public final class HealthListener implements Listener {
             return;
         }
         // Heal of any cause, but only if a bar is already showing on this entity.
-        // Refresh keeps whatever style the bar already has, so style is irrelevant.
-        syncBar(entity, true, DisplayStyle.BAR);
+        // Refresh keeps the bar's existing style and character, so neither matters here.
+        syncBar(entity, true, DisplayStyle.BAR, "");
     }
 
     /**
@@ -81,7 +82,8 @@ public final class HealthListener implements Listener {
      * value while the event is being handled. When {@code refreshOnly} is set the
      * bar is only updated if one is already visible (used for healing).
      */
-    private void syncBar(LivingEntity entity, boolean refreshOnly, DisplayStyle style) {
+    private void syncBar(LivingEntity entity, boolean refreshOnly, DisplayStyle style,
+                         String icon) {
         entity.getScheduler().run(plugin, task -> {
             if (!entity.isValid() || entity.isDead()) {
                 return;
@@ -94,7 +96,7 @@ public final class HealthListener implements Listener {
             if (refreshOnly) {
                 manager.refresh(entity, current, max);
             } else {
-                manager.show(entity, current, max, style);
+                manager.show(entity, current, max, style, icon);
             }
         }, null);
     }
@@ -106,6 +108,15 @@ public final class HealthListener implements Listener {
         }
         return DisplayStyle.fromKey(prefs.get(damager.getUniqueId(),
                 HealthBarPlugin.DISPLAY_KEY, DisplayStyle.BAR.key()));
+    }
+
+    /** The character of the bar icon the damager picked in {@code /menu} (default block). */
+    private String iconFor(Player damager) {
+        if (prefs == null) {
+            return BarIcon.BLOCK.icon();
+        }
+        return BarIcon.fromKey(prefs.get(damager.getUniqueId(),
+                HealthBarPlugin.ICON_KEY, BarIcon.BLOCK.key())).icon();
     }
 
     /** The player behind the damage (direct or via their projectile), or {@code null}. */

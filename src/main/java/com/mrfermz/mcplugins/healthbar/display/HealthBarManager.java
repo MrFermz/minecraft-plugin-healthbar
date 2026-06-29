@@ -29,7 +29,7 @@ public final class HealthBarManager {
 
     /** Remembered state so the entity's real name can be put back. */
     private record Tracked(Component originalName, boolean originalVisible, long expiresAt,
-                           DisplayStyle style) {
+                           DisplayStyle style, String icon) {
     }
 
     private final Plugin plugin;
@@ -51,19 +51,20 @@ public final class HealthBarManager {
 
     /**
      * Shows (or refreshes) the bar above {@code entity} for the configured
-     * duration, drawn in {@code style} (the hitter's chosen display). Stores the
-     * entity's real name on first appearance.
+     * duration, drawn in {@code style} with {@code icon} for the segments (both the
+     * hitter's per-player choices). Stores the entity's real name on first appearance.
      */
-    public void show(LivingEntity entity, double current, double max, DisplayStyle style) {
+    public void show(LivingEntity entity, double current, double max, DisplayStyle style,
+                     String icon) {
         UUID id = entity.getUniqueId();
         active.compute(id, (key, existing) -> {
             Component original = existing != null ? existing.originalName() : entity.customName();
             boolean visible = existing != null ? existing.originalVisible() : entity.isCustomNameVisible();
             return new Tracked(original, visible,
-                    System.currentTimeMillis() + settings.durationMillis(), style);
+                    System.currentTimeMillis() + settings.durationMillis(), style, icon);
         });
 
-        entity.customName(renderer.render(current, max, style));
+        entity.customName(renderer.render(current, max, style, icon));
         entity.setCustomNameVisible(true);
     }
 
@@ -80,8 +81,9 @@ public final class HealthBarManager {
             return false;
         }
         active.put(id, new Tracked(existing.originalName(), existing.originalVisible(),
-                System.currentTimeMillis() + settings.durationMillis(), existing.style()));
-        entity.customName(renderer.render(current, max, existing.style()));
+                System.currentTimeMillis() + settings.durationMillis(),
+                existing.style(), existing.icon()));
+        entity.customName(renderer.render(current, max, existing.style(), existing.icon()));
         entity.setCustomNameVisible(true);
         return true;
     }
